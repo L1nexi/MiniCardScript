@@ -1,0 +1,33 @@
+; racket mini-card-eval.rkt sample.cdlang
+
+
+(character
+; 玩家请固定使用 player
+  (name player)
+  (hp 30)
+  (max-hp 30)
+  (energy 3)
+  (status)
+)
+
+(character
+  (name Slime)
+  (hp 20)
+  (max-hp 20)
+  (energy 99)
+  (status vulnerable)
+)
+
+(card
+  (name Strike)
+  (cost 1)
+  (desc "Deal 6 damage to enemy.")
+  (effect
+    (target enemy)
+    (damage 6)
+  )
+)
+
+(play-card Strike player)
+
+(next-turn)
