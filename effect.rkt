@@ -45,79 +45,94 @@
 
 
 (define (handle-mod-energy user target n e)
-    (printf "~a gains ~a energy\n"
-            (character-name target)
-            n)
-    
-    ; 修改能量
-    (set-character-energy! user (+ (character-energy user) n))
-    
-    ; 输出能量信息
-    (printf "New energy for ~a: ~a\n"
-           (character-name user)
-           (character-energy user))
-    e)
+    (cond [(list? target) (for ([t target])
+                            (handle-mod-energy user t n e))]
+          [else
+            (printf "~a gains ~a energy\n"
+                    (character-name target)
+                    n)
+            
+            ; 修改能量
+            (set-character-energy! user (+ (character-energy user) n))
+            
+            ; 输出能量信息
+            (printf "New energy for ~a: ~a\n"
+                (character-name user)
+                (character-energy user))]
+    ))
 
 (define (handle-inflict user target status n e)
-    (printf "~a inflicts ~a on ~a with level ~a\n"
-            (character-name user)
-            status
-            (character-name target)
-            n)
-    
-    ; 检查是否已有该状态，增加层数
-    (define current-count (get-status-count target status))
-    (if (> current-count 0)
-        (set-character-status! target
-            (map (lambda (s)
-                   (if (equal? (first s) status)
-                       (list status (+ n current-count))
-                       s))
-                 (character-status target)))
-        ; 否则添加新状态
-        (set-character-status! target
-            (cons (list status n) (character-status target))))
-    
-    ; 输出状态信息
-    (printf "New status for ~a: ~a\n"
-           (character-name target)
-           (character-status target))
-    e)
+    (cond [(list? target) (for ([t target])
+                            (handle-inflict user t status n e))]
+          [else
+            (printf "~a inflicts ~a on ~a with level ~a\n"
+                    (character-name user)
+                    status
+                    (character-name target)
+                    n)
+            
+            ; 检查是否已有该状态，增加层数
+            (define current-count (get-status-count target status))
+            (if (> current-count 0)
+                (set-character-status! target
+                    (map (lambda (s)
+                        (if (equal? (first s) status)
+                            (list status (+ n current-count))
+                            s))
+                        (character-status target)))
+                ; 否则添加新状态
+                (set-character-status! target
+                    (cons (list status n) (character-status target))))
+            
+            ; 输出状态信息
+            (printf "New status for ~a: ~a\n"
+                (character-name target)
+                (character-status target))]))
 
 (define (handle-damage user target n e)
     ; TODO 目前只处理单个目标
     ; 只处理了易损状态
-    (define weakened-damage
-      (let ([base-damage n])
-        (if (has-status? user 'weak)
-            (floor (* base-damage 0.75))  ; 0.75倍乘区
-            base-damage)))
+    (cond [(list? target) (for ([t target])
+                            (handle-damage user t n e))]
+          [else
+            (define weakened-damage
+            (let ([base-damage n])
+                (if (has-status? user 'weak)
+                    (floor (* base-damage 0.75))  ; 0.75倍乘区
+                    base-damage)))
 
-    (define actual-damage
-      (let ([base-damage weakened-damage])
-        (if (has-status? target 'vulnerable)
-            (floor (* base-damage 1.5))  ; 1.5倍乘区
-            base-damage)))
+            (define actual-damage
+            (let ([base-damage weakened-damage])
+                (if (has-status? target 'vulnerable)
+                    (floor (* base-damage 1.5))  ; 1.5倍乘区
+                    base-damage)))
 
-    
-    (let ([new-hp (max 0 (- (character-hp target) actual-damage))])
-        (set-character-hp! target new-hp))
-        
-    (printf "~a dealt ~a damage to ~a, new HP: ~a\n"
-            (character-name user)
-            actual-damage
-            (character-name target)
-            (character-hp target)))
+            
+            (let ([new-hp (max 0 (- (character-hp target) actual-damage))])
+                (set-character-hp! target new-hp))
+                
+            (printf "~a dealt ~a damage to ~a, new HP: ~a\n"
+                    (character-name user)
+                    actual-damage
+                    (character-name target)
+                    (character-hp target))]))
+
 
 (define (handle-heal user target n e)
-    (let ([new-hp (min (character-max-hp target)
-                        (+ (character-hp target) n))])
-        (set-character-hp! target new-hp))
-    
-    (printf "Healed ~a HP to ~a, new HP: ~a\n"
-            n
-            (character-name target)
-            (character-hp target)))
+    (cond [(list? target) (for ([t target]) 
+                            (handle-heal user t n e))]
+          [else
+            (let ([new-hp (min (character-max-hp target)
+                                (+ (character-hp target) n))])
+                (set-character-hp! target new-hp))
+            
+            (printf "Healed ~a HP to ~a, new HP: ~a\n"
+                    n
+                    (character-name target)
+                    (character-hp target))]                     
+    ))
+          
+                            
 
 
 (provide (all-defined-out))

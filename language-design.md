@@ -18,14 +18,33 @@ effect 部分可以包含多种类型的效果。
 
 
 ```bnf
-<effect> ::= <action> | <target> | <condition> | <next-turn> ...
-<action> ::= (damage int) | (heal int) | (inflict <status> int) | (gain-energy int)
-<target> ::= (target enemy) | (target self) | (target all)
+<effect> ::= <action> | <target> | <condition> | <next-turn> | <control>
+
+<action> ::= (damage int) 
+           | (heal int) 
+           | (inflict <status> int) 
+           | (gain-energy int)
+
 <condition> ::= (<branch> <predicate> <effect>)
 <branch> ::= if | when
-<predicate> ::= (has-status <status>) | (hp<= pct) | (hp> pct) | (energy>= int) | (random<= pct)
+
+<control> ::= (repeat int <effect>) 
+            | (choose <effect>+)
+
+<target> ::= (target enemy) 
+           | (target self) 
+           | (target all)
+
 <next-turn> ::= (next-turn)
-<status> ::=  vulnerable | weak | poisoned | fire
+
+<predicate> ::= (has-status <status>) 
+              | (hp<= pct) 
+              | (hp> pct) 
+              | (energy>= int) 
+              | (random<= pct)
+
+<status> ::= vulnerable | weak | poisoned | fire
+
 <play-card> ::= (play-card <card-name> <user> <target>)
 ```
 
