@@ -13,6 +13,11 @@
 (unless (file-exists? filename)
   (error (format "File ~a does not exist" filename)))
 
+(define (int-or-error n)
+  (if (and (number? n) (exact-integer? n))
+      n
+      (error "Expected an integer, got: " n)))
+
 (define ast (read-s-exprs filename))
 
-(provide read-s-exprs filename ast)
+(provide read-s-exprs filename ast int-or-error)

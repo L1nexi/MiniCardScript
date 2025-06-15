@@ -6,6 +6,7 @@
 ; 角色的名称、生命值、能量和状态
 ; 状态可有多个。每一个状态都是一个 symbol，持续一轮
 ; character 需要持续更新状态，设置为 mutable
+; status : ((<status-name> <count>) ...)
 (struct character (name hp max-hp energy max-energy status) #:transparent #:mutable)
 
 (define (eval-character ast)
@@ -16,9 +17,9 @@
     (for ([item ast])
         (match item
             [(list 'name v) (set! name v)]
-            [(list 'hp v) (set! hp v)]
-            [(list 'energy v) (set! energy v)]
-            [(cons 'status statuses) (set! status statuses)] ; 这里statuses应为((weak 2) (vulnerable 1))
+            [(list 'hp v) (set! hp (int-or-error v))]
+            [(list 'energy v) (set! energy (int-or-error v))]
+            [(cons 'status statuses) (set! status statuses)]
             [else (error (format "Unknown character attribute: ~a" item))]))
     (character name hp hp energy energy status))
 
@@ -54,8 +55,8 @@
     (for ([item ast])
         (match item
             [(list 'name v) (set! name v)]
-            [(list 'cost v) (set! cost v)]
-            [(list 'desc v) (set! desc v)]
+            [(list 'cost v) (set! cost (int-or-error v))]
+            [(list 'desc v) (set! desc (int-or-error v))]
             [(cons 'effect effects) (set! effect effects)]
             [else (error (format "Unknown card attribute: ~a" item))]))
     (card name cost desc effect))
@@ -79,6 +80,7 @@
                 (if (eval-pred predicate current-target)
                     (eval-effect then-eff user e)
                     (eval-effect else-eff user e))]
+            [(list 'gain-energy n) (handle-mod-energy user current-target n e)]
             [(list 'inflict status n) (handle-inflict user current-target status n e)]
             [else (error (format "Unknown effect: ~a" e))])))
 
@@ -101,11 +103,25 @@
 ; 根据环境和目标选择目标
 (define (select-target who e) 
     (match who
-    ; TODO: 当前只支持单个敌人
+    ; TODO: 'enemy 目前默认选中第一个
         ['enemy (first (env-enemies e))]
         ['all (env-enemies e)]
         ['player (env-player e)]
         [else (error (format "Unknown target: ~a" who))]))
+
+(define (handle-mod-energy user target n e)
+    (printf "~a gains ~a energy\n"
+            (character-name target)
+            n)
+    
+    ; 修改能量
+    (set-character-energy! user (+ (character-energy user) n))
+    
+    ; 输出能量信息
+    (printf "New energy for ~a: ~a\n"
+           (character-name user)
+           (character-energy user))
+    e)
 
 (define (handle-inflict user target status n e)
     (printf "~a inflicts ~a on ~a with level ~a\n"
@@ -136,11 +152,18 @@
 (define (handle-damage user target n e)
     ; TODO 目前只处理单个目标
     ; 只处理了易损状态
-    (define actual-damage
+    (define weakened-damage
       (let ([base-damage n])
+        (if (has-status? user 'weak)
+            (floor (* base-damage 0.75))  ; 0.75倍乘区
+            base-damage)))
+
+    (define actual-damage
+      (let ([base-damage weakened-damage])
         (if (has-status? target 'vulnerable)
             (floor (* base-damage 1.5))  ; 1.5倍乘区
             base-damage)))
+
     
     (let ([new-hp (max 0 (- (character-hp target) actual-damage))])
         (set-character-hp! target new-hp))
@@ -247,7 +270,7 @@
      (printf "Evaluating: ~a\n" expr)
      (define new-env (eval-expr expr e))
      (print-env new-env) ; 打印当前环境
-     new-env) ; 返回这个作为新的 accumulator
+     new-env)
    initial-env
    ast))
 
