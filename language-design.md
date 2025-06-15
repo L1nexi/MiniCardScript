@@ -26,6 +26,7 @@ effect 部分可以包含多种类型的效果。
 <predicate> ::= (has-status <status>) | (hp<= pct) | (hp> pct) | (energy>= int) | (random<= pct)
 <next-turn> ::= (next-turn)
 <status> ::=  vulnerable | weak | poisoned | fire
+<play-card> ::= (play-card <card-name> <user> <target>)
 ```
 
 vulnerable 和 weak 是两种状态。vulnerable 使自身在收到伤害时额外受到50% 的伤害，而 weak 则使自身在造成伤害时只造成 75% 的伤害。

@@ -1,5 +1,7 @@
 #lang racket
 
+(require "core.rkt")
+
 (define (read-s-exprs filename)
   (call-with-input-file filename
     (lambda (in)
