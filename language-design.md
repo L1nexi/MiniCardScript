@@ -19,13 +19,13 @@ effect 部分可以包含多种类型的效果。
 
 ```bnf
 <effect> ::= <action> | <target> | <condition> | <next-turn> ...
-<action> ::= (damage int) | (heal int) | (inflict <status>) | (gain-energy int)
+<action> ::= (damage int) | (heal int) | (inflict <status> int) | (gain-energy int)
 <target> ::= (target enemy) | (target player)
 <condition> ::= (<branch> <predicate> <effect>)
 <branch> ::= if | when
 <predicate> ::= (has-status <status>) | (hp<= pct) | (hp> pct) | (energy>= int) | (random<= pct)
 <next-turn> ::= (next-turn)
-<status> ::=  vulnerable | weak
+<status> ::=  vulnerable | weak | poisoned | fire
 ```
 
 vulnerable 和 weak 是两种状态。vulnerable 使自身在收到伤害时额外受到50% 的伤害，而 weak 则使自身在造成伤害时只造成 75% 的伤害。

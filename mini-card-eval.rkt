@@ -79,6 +79,7 @@
                 (if (eval-pred predicate current-target)
                     (eval-effect then-eff user e)
                     (eval-effect else-eff user e))]
+            [(list 'inflict status n) (handle-inflict user current-target status n e)]
             [else (error (format "Unknown effect: ~a" e))])))
 
 ; 评估条件表达式
@@ -105,6 +106,32 @@
         ['all (env-enemies e)]
         ['player (env-player e)]
         [else (error (format "Unknown target: ~a" who))]))
+
+(define (handle-inflict user target status n e)
+    (printf "~a inflicts ~a on ~a with level ~a\n"
+            (character-name user)
+            status
+            (character-name target)
+            n)
+    
+    ; 检查是否已有该状态，增加层数
+    (define current-count (get-status-count target status))
+    (if (> current-count 0)
+        (set-character-status! target
+            (map (lambda (s)
+                   (if (equal? (first s) status)
+                       (list status (+ n current-count))
+                       s))
+                 (character-status target)))
+        ; 否则添加新状态
+        (set-character-status! target
+            (cons (list status n) (character-status target))))
+    
+    ; 输出状态信息
+    (printf "New status for ~a: ~a\n"
+           (character-name target)
+           (character-status target))
+    e)
 
 (define (handle-damage user target n e)
     ; TODO 目前只处理单个目标
@@ -159,14 +186,14 @@
 
 (define (handle-next-turn e)
   (printf "Handling next turn...\n")
-  ; 恢复玩家能量
+  ; 恢复玩家能量，计算状态
   (define player (env-player e))
   (set-character-energy! player (character-max-energy player))
-  ; 恢复敌人能量
+  (status-calc player)
+  ; 恢复敌人能量，计算状态
   (for ([enemy (env-enemies e)])
-    (set-character-energy! enemy (character-max-energy enemy)))
- 
-    (status-calc e)
+    (set-character-energy! enemy (character-max-energy enemy))
+    (status-calc enemy))
    e)
 
  ; 进行状态的处理：vulnerable、weak 等减少一层。poisoned, fire 造成等同于层数的伤害后，减少一半层数（下取整）
@@ -219,9 +246,27 @@
    (lambda (expr e)
      (printf "Evaluating: ~a\n" expr)
      (define new-env (eval-expr expr e))
+     (print-env new-env) ; 打印当前环境
      new-env) ; 返回这个作为新的 accumulator
    initial-env
    ast))
+
+(define (print-env e)
+  (printf "—┄┄┄ Environment ┄┄┄—\n")
+  (define p (env-player e))
+  (printf " Player: ~a (HP: ~a/~a, Energy: ~a/~a, Status: ~a)\n"
+          (character-name p)
+          (character-hp    p) (character-max-hp    p)
+          (character-energy p) (character-max-energy p)
+          (character-status p))
+  (for ([enemy (env-enemies e)])
+    (printf " Enemy:  ~a (HP: ~a/~a, Energy: ~a/~a, Status: ~a)\n"
+            (character-name enemy)
+            (character-hp    enemy) (character-max-hp    enemy)
+            (character-energy enemy) (character-max-energy enemy)
+            (character-status enemy)))
+  (printf " Cards in env: ~a\n" (map card-name (env-cards e)))
+  (printf "—┄┄┄┄┄┄┄┄┄┄┄┄—\n"))
 
 (printf "S-Exp read:\n")
 (pretty-print ast) ; just for debug, you can delete these lines
