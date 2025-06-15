@@ -16,6 +16,8 @@
             [(list 'heal n) (handle-heal user current-target n e)]
         ; 嵌套的 effect
             [(cons 'effect eff) (eval-effect eff user target e)]
+            [(list 'gain-energy n) (handle-mod-energy user current-target n e)]
+            [(list 'inflict status n) (handle-inflict user current-target status n e)]
             [(list 'when predicate (cons 'effect eff))
                 (when (eval-pred predicate current-target)
                     (eval-effect eff user target e))] 
@@ -23,9 +25,13 @@
                 (if (eval-pred predicate current-target)
                     (eval-effect then-eff target user e)
                     (eval-effect else-eff target user e))]
-            [(list 'gain-energy n) (handle-mod-energy user current-target n e)]
-            [(list 'inflict status n) (handle-inflict user current-target status n e)]
-            [else (error (format "Unknown effect: ~a" e))])))
+            [(list 'repeat n (cons 'effect eff))
+                (for ([i (in-range n)])
+                    (eval-effect eff user target e))]
+            [(cons 'choice choices)
+                (define selected (list-ref choices (random (length choices))))
+                (eval-effect (list selected) user target e)]
+            [else (error (format "Unknown effect: ~a" expr))])))
 
 ; 评估条件表达式
 (define (eval-pred pred target)

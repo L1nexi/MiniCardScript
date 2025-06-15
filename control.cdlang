@@ -1,0 +1,47 @@
+; racket mini-card-eval.rkt control.cdlang
+
+(character
+  (name player)
+  (hp 30)
+  (energy 5)
+  (status))
+
+(character
+  (name Goblin)
+  (hp 20)
+  (energy 0)
+  (status))
+
+(card
+  (name 连续拳)
+  (cost 0)
+  (desc "造成4次2点伤害")
+  (effect
+    (repeat 4 (effect (damage 2)))
+    )
+)
+
+(card
+  (name 放血)
+  (cost 0)
+  (desc "失去7点生命，获取两点能量")
+  (effect
+    (target self)
+    (damage 7)
+    (gain-energy 2)
+  )
+)
+
+(card
+  (name 随手一击)
+  (cost 0)
+  (desc "造成7点伤害，施加中毒5层或者易损2层")
+  (effect
+    (damage 7)
+    (choice (inflict poisoned 5) (inflict vulnerable 2))
+    )
+)
+
+(play-card 连续拳 player Goblin)
+(play-card 放血 player Goblin)
+(play-card 随手一击 player Goblin)
