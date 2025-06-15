@@ -13,7 +13,7 @@
   (name Slime)
   (hp 20)
   (energy 99)
-  (status vulnerable)
+  (status (vulnerable 1))
 )
 
 (card

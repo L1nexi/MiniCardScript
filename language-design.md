@@ -21,8 +21,9 @@ effect 部分可以包含多种类型的效果。
 <effect> ::= <action> | <target> | <condition> | <next-turn> ...
 <action> ::= (damage int) | (heal int) | (inflict <status>) | (gain-energy int)
 <target> ::= (target enemy) | (target player)
-<condition> ::= (when <predicate> <effect>)
-<predicate> ::= (has-status <status>) | (hp<= percent) | (hp> percent) | (energy>= int)
+<condition> ::= (<branch> <predicate> <effect>)
+<branch> ::= if | when
+<predicate> ::= (has-status <status>) | (hp<= pct) | (hp> pct) | (energy>= int) | (random<= pct)
 <next-turn> ::= (next-turn)
 <status> ::=  vulnerable | weak
 ```

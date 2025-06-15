@@ -18,7 +18,7 @@
             [(list 'name v) (set! name v)]
             [(list 'hp v) (set! hp v)]
             [(list 'energy v) (set! energy v)]
-            [(cons 'status statuses) (set! status statuses)]
+            [(cons 'status statuses) (set! status statuses)] ; 这里statuses应为((weak 2) (vulnerable 1))
             [else (error (format "Unknown character attribute: ~a" item))]))
     (character name hp hp energy energy status))
 
@@ -72,8 +72,30 @@
             [(list 'heal n) (handle-heal user current-target n e)]
         ; 嵌套的 effect
             [(cons 'effect eff) (eval-effect eff user e)]
+            [(list 'when predicate (cons 'effect eff))
+                (when (eval-pred predicate current-target)
+                    (eval-effect eff user e))] 
+            [(list 'if predicate (cons 'effect then-eff) (cons 'effect else-eff))
+                (if (eval-pred predicate current-target)
+                    (eval-effect then-eff user e)
+                    (eval-effect else-eff user e))]
             [else (error (format "Unknown effect: ~a" e))])))
 
+; 评估条件表达式
+(define (eval-pred pred target)
+  (match pred
+    [(list 'has-status status)
+     (has-status? target status)]
+    [(list 'hp<= pct)
+     (<= (/ (character-hp target) (character-max-hp target)) (/ pct 100.0))]
+    [(list 'hp> pct)
+     (> (/ (character-hp target) (character-max-hp target)) (/ pct 100.0))]
+    [(list 'energy>= n)
+     (>= (character-energy target) n)]
+    [(list 'random<= pct)
+     (<= (random 100) pct)]
+    [else
+     (error (format "Unknown predicate: ~a" pred))]))
 
 ; 根据环境和目标选择目标
 (define (select-target who e) 
@@ -112,9 +134,14 @@
             (character-name target)
             (character-hp target)))
 
-; 检查角色是否有某个状态
+; 判断是否有某个状态
 (define (has-status? character status)
-    (member status (character-status character)))
+  (ormap (lambda (s) (equal? (first s) status)) (character-status character)))
+
+; 获取某个状态的层数
+(define (get-status-count character status)
+  (define found (findf (lambda (s) (equal? (first s) status)) (character-status character)))
+  (if found (second found) 0))
 
 ; 使用卡牌
 (define (play-card card user e)
@@ -138,12 +165,30 @@
   ; 恢复敌人能量
   (for ([enemy (env-enemies e)])
     (set-character-energy! enemy (character-max-energy enemy)))
-  ; 清除状态
-  (set-character-status! player '())
-  (for ([enemy (env-enemies e)])
-    (set-character-status! enemy '()))
-  (printf "Restored energy and cleared status\n")
+ 
+    (status-calc e)
    e)
+
+ ; 进行状态的处理：vulnerable、weak 等减少一层。poisoned, fire 造成等同于层数的伤害后，减少一半层数（下取整）
+(define (status-calc character)
+  (define new-status
+    (for/list ([s (character-status character)])
+      (match s
+        [(list 'vulnerable n)
+         (if (> n 1) (list 'vulnerable (- n 1)) #f)]
+        [(list 'weak n)
+         (if (> n 1) (list 'weak (- n 1)) #f)]
+        [(list 'poisoned n)
+         (when (> n 0)
+           (set-character-hp! character (max 0 (- (character-hp character) n))))
+         (if (>= n 2) (list 'poisoned (floor (/ n 2))) #f)]
+        [(list 'fire n)
+         (when (> n 0)
+           (set-character-hp! character (max 0 (- (character-hp character) n))))
+         (if (>= n 2) (list 'fire (floor (/ n 2))) #f)]
+        [else s])))
+  ; 过滤掉 #f（即已移除的状态）
+  (set-character-status! character (filter identity new-status)))
 
 ; 解析单条 S-Expression
 (define (eval-expr ast e)
@@ -174,7 +219,6 @@
    (lambda (expr e)
      (printf "Evaluating: ~a\n" expr)
      (define new-env (eval-expr expr e))
-     (printf "Current environment: ~a\n" new-env)
      new-env) ; 返回这个作为新的 accumulator
    initial-env
    ast))

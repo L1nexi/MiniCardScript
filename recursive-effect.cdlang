@@ -12,11 +12,11 @@
   (name Slime)
   (hp 20)
   (energy 99)
-  (status vulnerable)
+  (status (vulnerable 1))
 )
 
 (card
-  (name FocusedAttack)
+  (name 亡命连击)
   (cost 1)
   (desc "Deal 3*6 damage to enemy.")
   (effect
@@ -27,4 +27,4 @@
         (damage 6))
   )
 )
-(play-card FocusedAttack player)
+(play-card 亡命连击 player)
