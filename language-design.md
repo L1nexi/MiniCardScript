@@ -7,7 +7,7 @@ MiniCardLang 是一门面向卡牌游戏的领域特定语言（DSL），用于�
 ### 卡牌相关语法
 ```scheme
 (card
-  (name "CardName")
+  (name CardName)
   (cost 1)
   (desc "Text shown to user.")
   (effect <effect>))
@@ -20,7 +20,7 @@ effect 部分可以包含多种类型的效果。
 ```bnf
 <effect> ::= <action> | <target> | <condition> | <next-turn> ...
 <action> ::= (damage int) | (heal int) | (inflict <status> int) | (gain-energy int)
-<target> ::= (target enemy) | (target player)
+<target> ::= (target enemy) | (target self) | (target all)
 <condition> ::= (<branch> <predicate> <effect>)
 <branch> ::= if | when
 <predicate> ::= (has-status <status>) | (hp<= pct) | (hp> pct) | (energy>= int) | (random<= pct)
@@ -28,6 +28,8 @@ effect 部分可以包含多种类型的效果。
 <status> ::=  vulnerable | weak | poisoned | fire
 <play-card> ::= (play-card <card-name> <user> <target>)
 ```
+
+目标指定：卡牌使用时指定主要目标。后续通过 enemy 指定该目标。可以通过 self 指定自身，all 指定所有目标。
 
 vulnerable 和 weak 是两种状态。vulnerable 使自身在收到伤害时额外受到50% 的伤害，而 weak 则使自身在造成伤害时只造成 75% 的伤害。
 

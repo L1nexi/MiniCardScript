@@ -11,7 +11,7 @@
 ; status : ((<status-name> <count>) ...)
 
 ; 使用卡牌
-(define (play-card card user e)
+(define (play-card card user target e)
   (define cost (card-cost card))
   ; 检查能量是否足够
   (if (< (character-energy user) cost)
@@ -21,7 +21,7 @@
         (printf "Playing card: ~a, cost: ~a\n" (card-name card) cost)
         (set-character-energy! user (- (character-energy user) cost))
         ; 执行效果，传入目标
-        (eval-effect (card-effect card) user e)
+        (eval-effect (card-effect card) user target e)
         e)))
 
 (define (handle-next-turn e)
@@ -51,10 +51,11 @@
      (define c (eval-card body))
      (env (env-player e) (env-enemies e) (cons c (env-cards e)))]
 
-    [(list 'play-card card-name user-name)
+    [(list 'play-card card-name user-name target-name)
      (define card (lookup-card card-name e))
      (define user (lookup-character user-name e))
-     (play-card card user e)]
+     (define target (lookup-character target-name e))
+     (play-card card user target e)]
 
     [(list 'next-turn)
      (handle-next-turn e)]

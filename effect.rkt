@@ -5,24 +5,24 @@
 (require "parser-util.rkt")
 
 ; 效果解释器
-(define (eval-effect exprs user e)
-    (define current-target '())
+(define (eval-effect exprs user target e)
+    (define current-target target)
     (for ([expr exprs])
         (match expr
             [(list 'target who)
              (set! current-target 
-                    (select-target who e))]
+                    (select-target who user target e))]
             [(list 'damage n) (handle-damage user current-target n e)]
             [(list 'heal n) (handle-heal user current-target n e)]
         ; 嵌套的 effect
-            [(cons 'effect eff) (eval-effect eff user e)]
+            [(cons 'effect eff) (eval-effect eff user target e)]
             [(list 'when predicate (cons 'effect eff))
                 (when (eval-pred predicate current-target)
-                    (eval-effect eff user e))] 
+                    (eval-effect eff user target e))] 
             [(list 'if predicate (cons 'effect then-eff) (cons 'effect else-eff))
                 (if (eval-pred predicate current-target)
-                    (eval-effect then-eff user e)
-                    (eval-effect else-eff user e))]
+                    (eval-effect then-eff target user e)
+                    (eval-effect else-eff target user e))]
             [(list 'gain-energy n) (handle-mod-energy user current-target n e)]
             [(list 'inflict status n) (handle-inflict user current-target status n e)]
             [else (error (format "Unknown effect: ~a" e))])))

@@ -22,7 +22,7 @@
   (effect
     (target enemy)
     (damage 6)
-    (target player)
+    (target self)
     (when 
         (hp<= 25)
         (effect 
@@ -35,11 +35,11 @@
   (cost 0)
   (desc "")
   (effect
-    (target player)
+    (target enemy)
     (damage 26)
   )
 )
 
-(play-card 亡命连击 player)
-(play-card 撞击 Slime)
-(play-card 亡命连击 player)
+(play-card 亡命连击 player Slime)
+(play-card 撞击 Slime player)
+(play-card 亡命连击 player Slime)
