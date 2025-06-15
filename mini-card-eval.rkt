@@ -6,23 +6,21 @@
 ; 角色的名称、生命值、能量和状态
 ; 状态可有多个。每一个状态都是一个 symbol，持续一轮
 ; character 需要持续更新状态，设置为 mutable
-(struct character (name hp max-hp energy status) #:transparent #:mutable)
+(struct character (name hp max-hp energy max-energy status) #:transparent #:mutable)
 
 (define (eval-character ast)
     (define name #f)
     (define hp 0)
     (define energy 0)
     (define status '())
-    (define max-hp 0)
     (for ([item ast])
         (match item
             [(list 'name v) (set! name v)]
             [(list 'hp v) (set! hp v)]
-            [(list 'max-hp v) (set! max-hp v)] 
             [(list 'energy v) (set! energy v)]
             [(cons 'status statuses) (set! status statuses)]
             [else (error (format "Unknown character attribute: ~a" item))]))
-    (character name hp max-hp energy status))
+    (character name hp hp energy energy status))
 
 ; 环境，目前包括玩家和敌人
 ; 玩家是 character 类型，enemies 是一个 character 列表， cards 是一个 card 列表
@@ -128,7 +126,22 @@
         (set-character-energy! user (- (character-energy user) cost))
         ; 执行效果，传入目标
         (eval-effect (card-effect card) user e)
-        (values e (format "Played card: ~a - ~a" (card-name card) (card-desc card))))))
+        e)))
+
+(define (handle-next-turn e)
+  (printf "Handling next turn...\n")
+  ; 恢复玩家能量
+  (define player (env-player e))
+  (set-character-energy! player (character-max-energy player))
+  ; 恢复敌人能量
+  (for ([enemy (env-enemies e)])
+    (set-character-energy! enemy (character-max-energy enemy)))
+  ; 清除状态
+  (set-character-status! player '())
+  (for ([enemy (env-enemies e)])
+    (set-character-status! enemy '()))
+  (printf "Restored energy and cleared status\n")
+   e)
 
 ; 解析单条 S-Expression
 (define (eval-expr ast e)
@@ -146,8 +159,10 @@
     [(list 'play-card card-name user-name)
      (define card (lookup-card card-name e))
      (define user (lookup-character user-name e))
-     (play-card card user e)
-     e]
+     (play-card card user e)]
+
+    [(list 'next-turn)
+     (handle-next-turn e)]
 
     [else
      (error (format "Unknown top-level expression: ~a" ast))]))

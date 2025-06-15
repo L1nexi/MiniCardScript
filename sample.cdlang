@@ -5,7 +5,6 @@
 ; 玩家请固定使用 player
   (name player)
   (hp 30)
-  (max-hp 30)
   (energy 3)
   (status)
 )
@@ -13,7 +12,6 @@
 (character
   (name Slime)
   (hp 20)
-  (max-hp 20)
   (energy 99)
   (status vulnerable)
 )
