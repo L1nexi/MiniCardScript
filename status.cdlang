@@ -12,15 +12,21 @@
   (energy 0)
   (status))
 
+(character
+  (name Goblin1)
+  (hp 20)
+  (energy 0)
+  (status (vulnerable 3)))
+
 (card
   (name Fireball)
   (cost 2)
   (desc "Deal 4 damage and inflict 3 layers of fire.")
   (effect
-    (target enemy)
+    (target all)
     (damage 4)
     (inflict fire 3)))
 
-(play-card Fireball player)
+(play-card Fireball player Goblin)
 (next-turn)  ; Goblin 将受到 3 点火焰伤害，并剩余 1 层 fire
 (next-turn)  ; Goblin 再受 1 点伤害，fire 状态清除
