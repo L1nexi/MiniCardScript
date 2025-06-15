@@ -1,0 +1,30 @@
+; racket mini-card-eval.rkt recursive-effect.cdlang
+
+(character
+; 玩家请固定使用 player
+  (name player)
+  (hp 30)
+  (energy 3)
+  (status)
+)
+
+(character
+  (name Slime)
+  (hp 20)
+  (energy 99)
+  (status vulnerable)
+)
+
+(card
+  (name FocusedAttack)
+  (cost 1)
+  (desc "Deal 3*6 damage to enemy.")
+  (effect
+    (effect
+        (target enemy)
+        (damage 6)
+        (damage 6)
+        (damage 6))
+  )
+)
+(play-card FocusedAttack player)

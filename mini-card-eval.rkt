@@ -70,6 +70,8 @@
                     (select-target who e))]
             [(list 'damage n) (handle-damage user current-target n e)]
             [(list 'heal n) (handle-heal user current-target n e)]
+        ; 嵌套的 effect
+            [(cons 'effect eff) (eval-effect eff user e)]
             [else (error (format "Unknown effect: ~a" e))])))
 
 
