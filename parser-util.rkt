@@ -79,24 +79,37 @@
         [else (error (format "Unknown target: ~a" who))]))
 
  ; 进行状态的处理：vulnerable、weak 等减少一层。poisoned, fire 造成等同于层数的伤害后，减少一半层数（下取整）
+(define status-tick
+  (hash
+    'poisoned (lambda (character n) (set-character-hp! character (max 0 (- (character-hp character) n))))
+    'fire     (lambda (character n) (set-character-hp! character (max 0 (- (character-hp character) n))))
+    'vulnerable (lambda (character n) (void))
+    'weak       (lambda (character n) (void))
+  ))
+
+
+(define status-decay
+  (hash
+    'poisoned (lambda (n) (floor (/ n 2)))
+    'fire     (lambda (n) (floor (/ n 2)))
+    'vulnerable (lambda (n) (max 0 (- n 1)))
+    'weak       (lambda (n) (max 0 (- n 1)))
+  ))
+
 (define (status-calc character)
   (define new-status
     (for/list ([s (character-status character)])
-      (match s
-        [(list 'vulnerable n)
-         (if (> n 1) (list 'vulnerable (- n 1)) #f)]
-        [(list 'weak n)
-         (if (> n 1) (list 'weak (- n 1)) #f)]
-        [(list 'poisoned n)
-         (when (> n 0)
-           (set-character-hp! character (max 0 (- (character-hp character) n))))
-         (if (>= n 2) (list 'poisoned (floor (/ n 2))) #f)]
-        [(list 'fire n)
-         (when (> n 0)
-           (set-character-hp! character (max 0 (- (character-hp character) n))))
-         (if (>= n 2) (list 'fire (floor (/ n 2))) #f)]
-        [else s])))
-  ; 过滤掉 #f（即已移除的状态）
+      (define status-name (first s))
+      (define n (second s))
+      ; tick
+      (define tick-fn (hash-ref status-tick status-name (lambda (c n) (void))))
+      (tick-fn character n)
+      ; decay
+      (define decay-fn (hash-ref status-decay status-name (lambda (n) n)))
+      (define new-n (decay-fn n))
+      (if (> new-n 0)
+          (list status-name new-n)
+          #f)))
   (set-character-status! character (filter identity new-status)))
 
 (provide (all-defined-out))
