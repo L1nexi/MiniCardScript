@@ -70,13 +70,7 @@
   (define found (findf (lambda (s) (equal? (first s) status)) (character-status character)))
   (if found (second found) 0))
 
-; 根据环境和目标选择目标
-(define (select-target who user target e) 
-    (match who
-        ['enemy target]
-        ['all (env-enemies e)]
-        ['self user]
-        [else (error (format "Unknown target: ~a" who))]))
+
 
  ; 进行状态的处理：vulnerable、weak 等减少一层。poisoned, fire 造成等同于层数的伤害后，减少一半层数（下取整）
 (define status-tick

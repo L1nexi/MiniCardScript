@@ -1,0 +1,41 @@
+; racket mini-card-eval.rkt target-pred.cdlang
+
+(character
+  (name player)
+  (hp 30)
+  (energy 5)
+  (status))
+
+(character
+  (name Goblin)
+  (hp 200)
+  (energy 0)
+  (status))
+
+(character
+  (name Goblin1)
+  (hp 200)
+  (energy 0)
+  (status))
+
+(card
+  (name Strike)
+  (cost 0)
+  (desc "test")
+  (effect
+    (target all)
+    (damage 10)
+    (inflict fire 10)
+
+    (target enemy)
+    (when (has-status fire) (damage 4))
+    (when (status-count>= fire 5) (damage 5))
+    (when (status-count>= fire 15) (damage 6))  ; 不执行
+    (when (hp<= 50) (damage 7))                 ; 不执行
+    (when (hp> 50) (damage 8))
+    (when (energy>= 1) (damage 9))              ; 不执行
+    (if (random<= 50) (damage 10) (damage 11))  ; 0.5 的概率执行
+  )
+)
+
+(play-card Strike player Goblin)
