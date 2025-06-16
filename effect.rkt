@@ -17,12 +17,12 @@
         [(list 'target who)
             (define new-target (select-target who ctx e))
             (make-ctx-from-target ctx new-target)]
-        [(list 'damage n) (handle-damage ctx n e) ctx]
-        [(list 'heal n) (handle-heal ctx n e) ctx]
+        [(list 'damage n) (handle-damage ctx (eval-expr n ctx e) e) ctx]
+        [(list 'heal n) (handle-heal ctx (eval-expr n ctx e) e) ctx]
     ; 嵌套的 effect
         [(cons 'effect eff) (eval-effect eff ctx e)]
-        [(list 'gain-energy n) (handle-mod-energy ctx n e) ctx]
-        [(list 'inflict status n) (handle-inflict ctx status n e) ctx]
+        [(list 'gain-energy n) (handle-mod-energy ctx (eval-expr n ctx e) e) ctx]
+        [(list 'inflict status n) (handle-inflict ctx status (eval-expr n ctx e) e) ctx]
         [(list 'when predicate eff)
             (if (eval-pred predicate (ctx-target ctx))
                 (eval-one-effect eff ctx e)
@@ -33,13 +33,52 @@
                 (eval-one-effect else-eff ctx e))]
         [(list 'repeat n eff)
             (for/fold ([acc-ctx ctx])
-                      ([i (in-range n)])
+                      ([i (in-range (eval-expr n ctx e))])
                 (eval-one-effect eff acc-ctx e))]
         [(cons 'choice choices)
             (define selected (list-ref choices (random (length choices))))
             (eval-one-effect selected ctx e)]
+        [(cons 'let (cons bindings body))
+            (eval-let bindings body ctx e)]
         [else (error (format "Unknown effect: ~a" expr))]))
 
+(define (eval-let bindings body ctx e)
+  (define new-vars
+    (map (lambda (b)
+           (match b
+             [(list var expr)
+              (cons var (eval-expr expr ctx e))]))
+         bindings))
+  (define extended-ctx
+    (extend-ctx ctx new-vars))
+  (eval-effect body extended-ctx e))
+
+(define (eval-expr expr ctx e)
+  (cond
+    [(number? expr) expr]
+    [(symbol? expr) (lookup-var expr ctx)]
+    [(list? expr) (eval-call expr ctx e)]
+    [else (error (format "Unknown expression: ~a" expr))]))
+
+(define (lookup-var name ctx)
+  (define val (assoc name (ctx-vars ctx)))
+  (if val
+      (cdr val)
+      (error (format "Unbound variable: ~a" name))))
+
+(define (eval-call expr ctx e)
+  (match expr
+    [(list '* a b)
+     (* (eval-expr a ctx e) (eval-expr b ctx e))]
+    [(list '+ a b)
+     (+ (eval-expr a ctx e) (eval-expr b ctx e))]
+    [(list '- a b)
+     (- (eval-expr a ctx e) (eval-expr b ctx e))]
+    [(list '/ a b)
+     (/ (eval-expr a ctx e) (eval-expr b ctx e))]
+    [(list 'get-status status)
+     (get-status-count (first (ctx-target ctx)) status)]
+    [else (error (format "Unknown function call: ~a" expr))]))
 ; 评估条件表达式
 (define (eval-pred pred targetlist)
   (define target (first targetlist))

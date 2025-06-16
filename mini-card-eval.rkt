@@ -21,7 +21,7 @@
         (printf "Playing card: ~a, cost: ~a\n" (card-name card) cost)
         (set-character-energy! user (- (character-energy user) cost))
         ; 执行效果，传入目标
-        (eval-effect (card-effect card) (ctx user intent (make-target intent)) e)
+        (eval-effect (card-effect card) (initial-ctx-from-user-intent user intent) e)
         e)))
 
 (define (handle-next-turn e)
@@ -39,7 +39,7 @@
 
 
 ; 解析单条 S-Expression
-(define (eval-expr ast e)
+(define (eval-s-expr ast e)
   (match ast
     [(cons 'character body)
      (define char (eval-character body))
@@ -67,7 +67,7 @@
   (foldl
    (lambda (expr e)
      (printf "Evaluating: ~a\n" expr)
-     (define new-env (eval-expr expr e))
+     (define new-env (eval-s-expr expr e))
      (print-env new-env) ; 打印当前环境
      new-env)
    initial-env

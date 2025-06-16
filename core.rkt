@@ -13,13 +13,20 @@
 ; intent：卡牌指定的目标 target：effect作用的目标。一张卡牌作用的目标可以与指定的目标不同，如：
 ; 造成伤害，回复自身血量。指定单个敌军但是target是敌军、自己
 ; target 始终是列表
-(struct ctx (user intent target) #:transparent)
+; vars：当前环境下绑定的变量，形如 `((a . 1) (b . 2))
+(struct ctx (user intent target vars) #:transparent)
 
 (define (make-ctx-from-intent c intnt)
-    (ctx (ctx-user c) intnt (ctx-target c)))
+    (ctx (ctx-user c) intnt (ctx-target c) (ctx-vars c)))
 
 (define (make-ctx-from-target c target)
-    (ctx (ctx-user c) (ctx-intent c) target))
+    (ctx (ctx-user c) (ctx-intent c) target (ctx-vars c)))
+
+(define (initial-ctx-from-user-intent user intent)
+    (ctx user intent (make-target intent) '()))
+
+(define (extend-ctx c new-vars)
+    (ctx (ctx-user c) (ctx-intent c) (ctx-target c) (append new-vars (ctx-vars c))))
 
 (define (make-target char)
     (list char))
