@@ -23,6 +23,8 @@
         [(cons 'effect eff) (eval-effect eff ctx e)]
         [(list 'gain-energy n) (handle-mod-energy ctx (eval-expr n ctx e) e) ctx]
         [(list 'inflict status n) (handle-inflict ctx status (eval-expr n ctx e) e) ctx]
+        [(list 'reduce status n) (handle-reduce ctx status (eval-expr n ctx e) e) ctx]
+        [(list 'remove-status status) (handle-remove-status ctx status e) ctx]
         [(list 'when predicate eff)
             (if (eval-pred predicate (ctx-target ctx))
                 (eval-one-effect eff ctx e)
@@ -84,14 +86,18 @@
 (define (eval-pred pred targetlist)
   (define target (first targetlist))
   (match pred
+    [(cons 'and preds)
+     (andmap (lambda (p) (eval-pred p targetlist)) preds)]
+    [(cons 'or preds)
+     (ormap (lambda (p) (eval-pred p targetlist)) preds)]
+    [(list 'not p)
+     (not (eval-pred p targetlist))]
     [(list 'has-status status)
      (has-status? target status)]
     [(list 'status-count>= status n)
      (>= (get-status-count target status) n)]
     [(list 'hp<= pct)
      (<= (/ (character-hp target) (character-max-hp target)) (/ pct 100.0))]
-    [(list 'hp> pct)
-     (> (/ (character-hp target) (character-max-hp target)) (/ pct 100.0))]
     [(list 'energy>= n)
      (>= (character-energy target) n)]
     [(list 'random<= pct)
@@ -143,6 +149,51 @@
             (character-name target)
             (character-status target))))
 
+(define (handle-reduce ctx status n e)
+    (for ([target (ctx-target ctx)])
+        (define user (ctx-user ctx))
+        (printf "~a reduces ~a on ~a with level ~a\n"
+                (character-name user)
+                status
+                (character-name target)
+                n)
+        
+        ; 检查是否已有该状态，且层数大于需减少量
+        (define current-count (get-status-count target status))
+        (if (> current-count n)
+            (set-character-status! target
+                (map (lambda (s)
+                    (if (equal? (first s) status)
+                        (list status (- current-count n))
+                        s))
+                    (character-status target)))
+            ; 否则删除原有状态
+            (set-character-status! target
+                (filter (lambda (item) (not (equal? (first item) status))))))
+        
+        ; 输出状态信息
+        (printf "New status for ~a: ~a\n"
+            (character-name target)
+            (character-status target))))
+
+(define (handle-remove-status ctx status e)
+    (for ([target (ctx-target ctx)])
+        (define user (ctx-user ctx))
+        (printf "~a remove ~a on ~a \n"
+                (character-name user)
+                status
+                (character-name target)
+                )
+
+        ; 删除对应状态
+        (set-character-status! target
+            (filter (lambda (item) (not (equal? (first item) status)))))
+        
+        ; 输出状态信息
+        (printf "New status for ~a: ~a\n"
+            (character-name target)
+            (character-status target))))    
+
 (define (handle-damage ctx n e)
      (for ([target (ctx-target ctx)])
 
@@ -158,7 +209,6 @@
             (if (has-status? target 'vulnerable)
                 (floor (* base-damage 1.5))  ; 1.5倍乘区
                 base-damage)))
-
         
         (let ([new-hp (max 0 (- (character-hp target) actual-damage))])
             (set-character-hp! target new-hp))
@@ -189,6 +239,10 @@
         ['enemy (make-target (ctx-intent ctx))]
         ['all (env-enemies e)]
         ['self (make-target (ctx-user ctx))]
+        ['random 
+         (define enemies (env-enemies e))
+         (make-target (list-ref enemies (random (length enemies))))
+        ]
         [else (error (format "Unknown target: ~a" who))]))
 
 
