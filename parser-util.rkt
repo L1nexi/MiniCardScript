@@ -1,6 +1,6 @@
 #lang racket
 
-(require "util.rkt")
+(require "input-util.rkt")
 (require "core.rkt")
 
 (define (eval-character ast)
@@ -105,5 +105,10 @@
           (list status-name new-n)
           #f)))
   (set-character-status! character (filter identity new-status)))
+
+(define (int-or-error n)
+  (if (and (number? n) (exact-integer? n))
+      n
+      (error "Expected an integer, got: " n)))
 
 (provide (all-defined-out))

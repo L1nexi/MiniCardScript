@@ -1,6 +1,6 @@
 #lang racket
 
-(require "util.rkt")
+(require "input-util.rkt")
 (require "core.rkt")
 (require "parser-util.rkt")
 
@@ -104,8 +104,6 @@
             (character-status target))))
 
 (define (handle-damage ctx n e)
-    ; TODO 目前只处理单个目标
-    ; 只处理了易损状态
      (for ([target (ctx-target ctx)])
 
         (define user (ctx-user ctx))

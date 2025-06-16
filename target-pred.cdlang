@@ -13,27 +13,34 @@
   (status))
 
 (character
-  (name Goblin1)
+  (name AnotherGoblin)
   (hp 200)
   (energy 0)
-  (status))
-
+  (status (vulnerable 2)))
+ 
 (card
   (name Strike)
-  (cost 0)
+  (cost 3)
   (desc "test")
   (effect
     (target all)
     (damage 10)
     (inflict fire 10)
+    ; 预计：Goblin 受到 10 伤，AnotherGoblin受到 15 伤
+    ; 均被施加 10 的烧伤
+
+    (target self)
+    (damage 14)
+    ; 预计：对自己造成 14 的伤害
 
     (target enemy)
-    (when (has-status fire) (damage 4))
-    (when (status-count>= fire 5) (damage 5))
-    (when (status-count>= fire 15) (damage 6))  ; 不执行
-    (when (hp<= 50) (damage 7))                 ; 不执行
-    (when (hp> 50) (damage 8))
-    (when (energy>= 1) (damage 9))              ; 不执行
+    (when (has-status fire) (damage 3))
+    (when (has-status poisoned) (damage 4))     ; 无中毒状态，不执行
+    (when (status-count>= fire 10) (damage 5))
+    (when (status-count>= fire 11) (damage 6))  ; #fire = 10 不执行
+    (when (hp<= 50) (damage 7))                 ; hp=16      不执行
+    (when (hp> 50) (damage 8))  
+    (when (energy>= 3) (damage 9))              ; energy=2   不执行
     (if (random<= 50) (damage 10) (damage 11))  ; 0.5 的概率执行
   )
 )

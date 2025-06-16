@@ -50,9 +50,11 @@
 (next-turn) 
 ; 预计 DOT 伤害：5 + 7 = 12
 ; 预计状态 ((vulnerable 3) (weak 2) (fire 2) (poisoned 3))
+
 (next-turn)
 ; 预计 DOT 伤害：2 + 3 = 5
 ; 预计状态 ((vulnerable 2) (weak 1) (fire 1) (poisoned 1))
+
 (next-turn)
 ; 预计 DOT 伤害：1 + 1 = 2
 ; 预计状态 ((vulnerable 1))

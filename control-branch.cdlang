@@ -8,7 +8,7 @@
 
 (character
   (name Goblin)
-  (hp 200)
+  (hp 32)
   (energy 0)
   (status))
 
@@ -17,14 +17,14 @@
   (cost 0)
   (desc "test")
   (effect
-    ; 预期伤害：4 * 2 = 8
-    (repeat 4 (damage 2))
+    ; 预期伤害：4 * 4 = 16
+    (repeat 4 (damage 4))
+    ; 预期伤害：5
+    (if (hp> 50) (damage 10) (damage 5))
     ; 预期伤害：6
     (repeat 4 (when (random<= 50) (damage 3)))
     ; 两种状态获得一钟
     (choice (inflict vulnerable 2) (inflict weak 2))
-    ; 预期伤害： 10
-    (if (hp> 50) (damage 10) (damage 5))
   )
 )
 
