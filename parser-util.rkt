@@ -63,7 +63,7 @@
 
 ; 判断是否有某个状态
 (define (has-status? character status)
-  (ormap (lambda (s) (equal? (first s) status)) (character-status character)))
+  (> (get-status-count character status) 0))
 
 ; 获取某个状态的层数
 (define (get-status-count character status)

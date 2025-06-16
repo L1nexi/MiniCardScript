@@ -75,10 +75,11 @@
     [(list '- a b)
      (- (eval-expr a ctx e) (eval-expr b ctx e))]
     [(list '/ a b)
-     (/ (eval-expr a ctx e) (eval-expr b ctx e))]
+     (floor (/ (eval-expr a ctx e) (eval-expr b ctx e)))]
     [(list 'get-status status)
      (get-status-count (first (ctx-target ctx)) status)]
     [else (error (format "Unknown function call: ~a" expr))]))
+
 ; 评估条件表达式
 (define (eval-pred pred targetlist)
   (define target (first targetlist))
