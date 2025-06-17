@@ -226,7 +226,7 @@
             (let ([new-hp (min (character-max-hp target)
                     (+ (character-hp target) n))])
             (set-character-hp! target new-hp))
-            (printf "~a Healed ~a HP to ~a, new HP: ~a\n"
+            (printf "~a healed ~a HP to ~a, new HP: ~a\n"
                     (character-name user)
                     n
                     (character-name target)

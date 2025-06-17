@@ -59,7 +59,8 @@
             (character-energy enemy) (character-max-energy enemy)
             (character-status enemy)))
   (printf " Cards in env: ~a\n" (map card-name (env-cards e)))
-  (printf "—┄┄┄┄┄┄┄┄┄┄┄┄—\n"))
+  (printf "—┄┄┄┄┄┄┄┄┄┄┄┄—\n")
+  e)
 
 ; 判断是否有某个状态
 (define (has-status? character status)

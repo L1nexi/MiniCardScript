@@ -22,7 +22,7 @@
         (set-character-energy! user (- (character-energy user) cost))
         ; 执行效果，传入目标
         (eval-effect (card-effect card) (initial-ctx-from-user-intent user intent) e)
-        e)))
+        (print-env e))))
 
 (define (handle-next-turn e)
   (printf "Handling next turn...\n")
@@ -34,7 +34,7 @@
   (for ([enemy (env-enemies e)])
     (set-character-energy! enemy (character-max-energy enemy))
     (status-calc enemy))
-   e)
+   (print-env e))
 
 
 
@@ -66,10 +66,8 @@
 (define (eval-ast ast)
   (foldl
    (lambda (expr e)
-     (printf "Evaluating: ~a\n" expr)
-     (define new-env (eval-s-expr expr e))
-     (print-env new-env) ; 打印当前环境
-     new-env)
+     (printf "\nEvaluating: ~a\n" expr)
+     (eval-s-expr expr e))
    initial-env
    ast))
 
