@@ -53,7 +53,8 @@
          bindings))
   (define extended-ctx
     (extend-ctx ctx new-vars))
-  (eval-effect body extended-ctx e))
+  (eval-effect body extended-ctx e)
+  ctx)
 
 (define (eval-expr expr ctx e)
   (cond
