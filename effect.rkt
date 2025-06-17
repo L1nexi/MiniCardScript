@@ -54,6 +54,7 @@
   (define extended-ctx
     (extend-ctx ctx new-vars))
   (eval-effect body extended-ctx e)
+  ; 返回旧的上下文
   ctx)
 
 (define (eval-expr expr ctx e)
@@ -196,29 +197,38 @@
             (character-status target))))    
 
 (define (handle-damage ctx n e)
-     (for ([target (ctx-target ctx)])
-
-        (define user (ctx-user ctx))
-        (define weakened-damage
-        (let ([base-damage n])
-            (if (has-status? user 'weak)
-                (floor (* base-damage 0.75))  ; 0.75倍乘区
-                base-damage)))
-
-        (define actual-damage
-        (let ([base-damage weakened-damage])
-            (if (has-status? target 'vulnerable)
-                (floor (* base-damage 1.5))  ; 1.5倍乘区
-                base-damage)))
-        
-        (let ([new-hp (max 0 (- (character-hp target) actual-damage))])
-            (set-character-hp! target new-hp))
-            
-        (printf "~a dealt ~a damage to ~a, new HP: ~a\n"
-                (character-name user)
-                actual-damage
-                (character-name target)
-                (character-hp target))))
+  (for ([target (ctx-target ctx)])
+    (define user (ctx-user ctx))
+    (define block (get-status-count target 'block))
+    (define weakened-damage
+      (let ([base-damage n])
+        (if (has-status? user 'weak)
+            (floor (* base-damage 0.75))
+            base-damage)))
+    (define actual-damage
+      (let ([base-damage weakened-damage])
+        (if (has-status? target 'vulnerable)
+            (floor (* base-damage 1.5))
+            base-damage)))
+    (define block-used (min block actual-damage))
+    (define hp-damage (max 0 (- actual-damage block)))
+    ; 扣除 block
+    (when (> block 0)
+      (set-character-status! target
+        (map (lambda (s)
+               (if (equal? (first s) 'block)
+                   (list 'block (- (second s) block-used))
+                   s))
+             (character-status target))))
+    ; 扣除 HP
+    (let ([new-hp (max 0 (- (character-hp target) hp-damage))])
+      (set-character-hp! target new-hp))
+    (printf "~a dealt ~a damage to ~a (block ~a), new HP: ~a\n"
+            (character-name user)
+            actual-damage
+            (character-name target)
+            block-used
+            (character-hp target))))
 
 
 (define (handle-heal ctx n e)

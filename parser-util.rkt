@@ -73,13 +73,14 @@
 
 
 
- ; 进行状态的处理：vulnerable、weak 等减少一层。poisoned, fire 造成等同于层数的伤害后，减少一半层数（下取整）
+ ; 进行状态的处理：vulnerable、weak 等减少一层。poisoned, fire 造成等同于层数的伤害后，减少一半层数（下取整）。 block 清零
 (define status-tick
   (hash
     'poisoned (lambda (character n) (set-character-hp! character (max 0 (- (character-hp character) n))))
     'fire     (lambda (character n) (set-character-hp! character (max 0 (- (character-hp character) n))))
     'vulnerable (lambda (character n) (void))
     'weak       (lambda (character n) (void))
+    'block      (lambda (character n) (void))
   ))
 
 
@@ -89,6 +90,7 @@
     'fire     (lambda (n) (floor (/ n 2)))
     'vulnerable (lambda (n) (max 0 (- n 1)))
     'weak       (lambda (n) (max 0 (- n 1)))
+    'block      (lambda (n) 0)
   ))
 
 (define (status-calc character)
