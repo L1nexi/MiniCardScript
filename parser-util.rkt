@@ -21,14 +21,14 @@
     (define card (findf (lambda (c) (equal? (card-name c) sym)) (env-cards e)))
     (if card
         card
-        (error (format "Card not found: ~a" sym))))
+        (error (format "lookup-card: Card not found: ~a" sym))))
 
 (define (lookup-character sym e)
     (define character (findf (lambda (c) (equal? (character-name c) sym)) 
                              (cons (env-player e) (env-enemies e))))
     (if character
         character
-        (error (format "Character not found: ~a" sym))))
+        (error (format "lookup-character: Character not found: ~a" sym))))
 
 (define (eval-card ast)
     (define name #f)
@@ -41,7 +41,7 @@
             [(list 'cost v) (set! cost (int-or-error v))]
             [(list 'desc v) (set! desc  v)]
             [(cons 'effect effects) (set! effect effects)]
-            [else (error (format "Unknown card attribute: ~a" item))]))
+            [else (error (format "eval-card: Unknown card attribute: ~a" item))]))
     (card name cost desc effect))
 
 (define (print-env e)
@@ -112,6 +112,6 @@
 (define (int-or-error n)
   (if (and (number? n) (exact-integer? n))
       n
-      (error "Expected an integer, got: " n)))
+      (error "int-or-error: Expected an integer, got: " n)))
 
 (provide (all-defined-out))

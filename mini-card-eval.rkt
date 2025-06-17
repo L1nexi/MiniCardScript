@@ -61,7 +61,7 @@
      (handle-next-turn e)]
 
     [else
-     (error (format "Unknown top-level expression: ~a" ast))]))
+     (error (format "eval-s-expr: Unknown top-level expression: ~a" ast))]))
 
 (define (eval-ast ast)
   (foldl

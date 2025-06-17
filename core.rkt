@@ -2,7 +2,6 @@
 
 (struct character (name hp max-hp energy max-energy status) #:transparent #:mutable)
 
-; 环境，目前包括玩家和敌人
 ; 玩家是 character 类型，enemies 是一个 character 列表， cards 是一个 card 列表
 (struct env (player enemies cards) #:transparent)
 
@@ -11,7 +10,6 @@
 (struct card (name cost desc effect) #:transparent)
 
 ; intent：卡牌指定的目标 target：effect作用的目标。一张卡牌作用的目标可以与指定的目标不同，如：
-; 造成伤害，回复自身血量。指定单个敌军但是target是敌军、自己
 ; target 始终是列表
 ; vars：当前环境下绑定的变量，形如 `((a . 1) (b . 2))
 (struct ctx (user intent target vars) #:transparent)

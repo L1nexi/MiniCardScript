@@ -42,7 +42,7 @@
             (eval-one-effect selected ctx e)]
         [(cons 'let (cons bindings body))
             (eval-let bindings body ctx e)]
-        [else (error (format "Unknown effect: ~a" expr))]))
+        [else (error (format "eval-one-effect: Unknown effect: ~a" expr))]))
 
 (define (eval-let bindings body ctx e)
   (define new-vars
@@ -62,13 +62,13 @@
     [(number? expr) expr]
     [(symbol? expr) (lookup-var expr ctx)]
     [(list? expr) (eval-call expr ctx e)]
-    [else (error (format "Unknown expression: ~a" expr))]))
+    [else (error (format "eval-expr: Unknown expression: ~a" expr))]))
 
 (define (lookup-var name ctx)
   (define val (assoc name (ctx-vars ctx)))
   (if val
       (cdr val)
-      (error (format "Unbound variable: ~a" name))))
+      (error (format "lookup-var: Unbound variable: ~a" name))))
 
 (define (eval-call expr ctx e)
   (match expr
@@ -86,7 +86,7 @@
      (max (eval-expr a ctx e) (eval-expr b ctx e))]
     [(list 'get-status status)
      (get-status-count (first (ctx-target ctx)) status)]
-    [else (error (format "Unknown function call: ~a" expr))]))
+    [else (error (format "eval-call: Unknown function call: ~a" expr))]))
 
 ; 评估条件表达式
 (define (eval-pred pred targetlist)
@@ -109,7 +109,7 @@
     [(list 'random<= pct)
      (<= (random 100) pct)]
     [else
-     (error (format "Unknown predicate: ~a" pred))]))
+     (error (format "eval-pred: Unknown predicate: ~a" pred))]))
 
 
 (define (handle-mod-energy ctx n e)
@@ -258,7 +258,7 @@
          (define enemies (env-enemies e))
          (make-target (list-ref enemies (random (length enemies))))
         ]
-        [else (error (format "Unknown target: ~a" who))]))
+        [else (error (format "select-target: Unknown target: ~a" who))]))
 
 
 (provide (all-defined-out))
