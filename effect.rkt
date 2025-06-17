@@ -80,6 +80,10 @@
      (- (eval-expr a ctx e) (eval-expr b ctx e))]
     [(list '/ a b)
      (floor (/ (eval-expr a ctx e) (eval-expr b ctx e)))]
+    [(list 'min a b)
+     (min (eval-expr a ctx e) (eval-expr b ctx e))]
+    [(list 'max a b)
+     (max (eval-expr a ctx e) (eval-expr b ctx e))]
     [(list 'get-status status)
      (get-status-count (first (ctx-target ctx)) status)]
     [else (error (format "Unknown function call: ~a" expr))]))
