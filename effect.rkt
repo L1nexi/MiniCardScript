@@ -187,7 +187,7 @@
 
         ; 删除对应状态
         (set-character-status! target
-            (filter (lambda (item) (not (equal? (first item) status)))))
+            (filter (lambda (item) (not (equal? (first item) status))) (character-status target)))
         
         ; 输出状态信息
         (printf "New status for ~a: ~a\n"

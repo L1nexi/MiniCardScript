@@ -2,3 +2,5 @@
 *.md
 
 !README.md
+
+*.txt
