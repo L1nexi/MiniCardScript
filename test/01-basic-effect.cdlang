@@ -1,0 +1,82 @@
+;; =======================================================
+;; 文件名：01-basic-effects.cdlang
+;; 测试目的：验证 damage/heal/gain-energy/inflict 基础动作
+;; =======================================================
+
+;; 角色定义
+(character
+  (name player)
+  (hp 30)
+  (energy 3)
+  (status (vulnerable 1)))   ;; player 初始带 1 层易损
+
+(character
+  (name Slime)
+  (hp 200)
+  (energy 99)
+  (status (vulnerable 1)))   ;; Slime 也带 1 层易损
+
+;; 卡牌：复合效果 + 基础动作
+(card
+  (name Strike)
+  (cost 1)
+  (desc "Inflict multiple statuses, then damage/heal/gain-energy")
+  (effect
+    ;; 施加各类状态
+    (inflict vulnerable 3)  
+    (inflict weak 3)        
+    (inflict fire 5)        
+    (inflict poisoned 7)    
+    (inflict block 6)       
+    ;; 预期状态 vulnerable 4, weak 3, fire 5, poisoned 7, block 6
+    (reduce poisoned 3)
+    (remove-status poisoned)
+    (inflict poisoned 7)
+    ;;   vulnerable 4, weak 3, fire 5, poisoned 7->4->0->7, block 6
+
+
+    ;; 造成 6 点基础伤害
+    ;; 实际伤害 = base 6
+    ;;   * 1.5 (Slime 易损) - block 6   = 3。
+    (damage 6)
+    (inflict block 6)       
+    ;; 回复 6 点
+    (heal 6)
+
+    ;; 切换到自身
+    (target self)
+    ;; 恢复能量 2
+    ;; player 初始 3 -1 + 2 = 4
+    (gain-energy 2)          ;; 预期能量：4
+  ))
+
+(play-card Strike player Slime)
+
+;; 卡牌：只做一次伤害，测试虚弱和易损的乘区
+(card
+  (name 撞击)
+  (cost 0)
+  (desc "Damage only, test weak & vulnerable")
+  (effect
+    ;; base 24
+    ;;   * 0.75 (Slime 虚弱): 18
+    ;;   * 1.5 (player 易损): 27
+    (damage 24)))            ;; 预期伤害：27
+
+;; 测试指令
+
+(play-card 撞击 Slime player)
+
+; 当前状态 ((vulnerable 4) (weak 3) (fire 5) (poisoned 7) (block 6))
+
+(next-turn) 
+; 预计 DOT 伤害：5 + 7 = 12。血量：200->188
+; 预计状态 ((vulnerable 3) (weak 2) (fire 2) (poisoned 3))
+
+(next-turn)
+; 预计 DOT 伤害：2 + 3 = 5。血量：188->186
+; 预计状态 ((vulnerable 2) (weak 1) (fire 1) (poisoned 1))
+
+(next-turn)
+; 预计 DOT 伤害：1 + 1 = 2。血量：183->181
+; 预计状态 ((vulnerable 1))

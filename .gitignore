@@ -1,8 +1,21 @@
-*.cdlang
 *.md
 
 !README.md
 
+!docs/DESIGN.md
+!docs/SYNTAX.md
+
 *.txt
 
+# 忽略所有生成的测试结果
+result/*.txt
+
+# 忽略所有压缩包
+*.zip
+
+# 忽略所有 PDF 文件
 *.pdf
+
+# 忽略所有临时文件
+*.tmp
+*.log

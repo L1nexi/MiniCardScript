@@ -1,0 +1,79 @@
+;; =======================================================
+;; 文件名：03-conditions.cdlang
+;; 测试目的：验证 if/when 及复合谓词 (and/or/not/status-count>=/has-status/hp<=/) 语义
+;; =======================================================
+
+;; 角色定义
+(character
+  (name player)
+  (hp 40)
+  (energy 5)
+  (status))    ;; 无初始状态
+
+(character
+  (name Orc)
+  (hp 50)
+  (energy 0)
+  (status (poisoned 3) (fire 2)))  ;; Orc 带 3 层中毒、2 层火焰
+
+;; 卡牌：简单 if 分支
+(card
+  (name ConditionalStrike)
+  (cost 1)
+  (desc "If Orc HP ≤ 50%, deal 10, else deal 5")
+  (effect
+    (target enemy)
+    (if (hp<= 50)
+        (damage 10)   
+        (damage 5))))   ;; 不满足条件，伤造成 5 点
+
+(play-card ConditionalStrike player Orc)
+;; 预期：Orc HP: 50 → 45
+
+;; 卡牌：when + has-status
+(card
+  (name StatusBurst)
+  (cost 1)
+  (desc "When Orc has poison, deal poison-count×2 damage")
+  (effect
+    (target enemy)
+    (when (has-status poisoned)
+      (let ([p (get-status poisoned)])
+        (damage (* p 2))))))  ;; p=3 → 6 点伤害
+
+(play-card StatusBurst player Orc)
+;; 预期：Orc HP: 45 → 39
+
+;; 卡牌：and/or/not 组合
+(card
+  (name LogicTest)
+  (cost 1)
+  (desc "If (poison≥3 and fire≥2) or not has weak, deal 8")
+  (effect
+    (target enemy)
+    (if (or
+          (and  ; 当前状态：(poisoned 3) (fire 2)
+            (status-count>= poisoned 3)
+            (status-count>= fire 1))
+          (not (has-status weak)))
+        (damage 8)    ;; 条件成立 → 8 点
+        (damage 2))))
+
+(play-card LogicTest player Orc)
+;; 预期：Orc HP: 39 -> 31
+
+;; 卡牌：status-count>= 细粒度
+(card
+  (name DeepPoisonTest)
+  (cost 1)
+  (desc "If Orc poison≥5 deal 5, elif poison≥2 deal 3, else deal 1")
+  (effect
+    (target enemy)
+    (if (status-count>= poisoned 5)
+        (damage 5)
+        (if (status-count>= poisoned 2)
+            (damage 3)  ;; 当前 p=3 → 满足第二分支 → 3
+            (damage 1)))))
+
+(play-card DeepPoisonTest player Orc)
+;; 预期：Orc HP: 31 → 28

@@ -1,0 +1,54 @@
+;; =======================================================
+;; 文件名：02-target-switching.cdlang
+;; 测试目的：验证 (target self/enemy/all/random) 目标切换行为
+;; =======================================================
+
+;; 角色定义
+(character
+  (name player)
+  (hp 20)
+  (energy 5)
+  (status))    ;; 无初始状态
+
+(character
+  (name GoblinA)
+  (hp 30)
+  (energy 0)
+  (status))
+
+(character
+  (name GoblinB)
+  (hp 30)
+  (energy 0)
+  (status))
+
+;; 卡牌：多次切换目标并造成伤害
+(card
+  (name SwitchStrike)
+  (cost 1)
+  (desc "Test target switching: self→enemy→all→random")
+  (effect
+    ;; 首先对自己造成 2 点伤害
+    (target self)
+    (damage 2)   ;; player HP: 20 → 18
+
+    ;; 然后对意图目标（GoblinA）造成 3 点伤害
+    (target enemy)
+    (damage 3)   ;; GoblinA HP: 30 → 27
+
+    ;; 再对所有角色造成 1 点伤害
+    (target all)
+    (damage 1)   ;; player 18 → 17; GoblinA 27 → 26; GoblinB 30 → 29
+
+    ;; 随机选一个敌人 4 次，每次造成 4 点伤害
+    (repeat 4
+      (effect
+        (target random)
+        (damage 4)))
+    ;; 预期：4 次随机命中 GoblinA 或 GoblinB，每次 -4 HP
+  ))
+
+;; 执行测试
+(play-card SwitchStrike player GoblinA)
+;; 以 GoblinB 做一次对称测试
+(play-card SwitchStrike player GoblinB)

@@ -1,0 +1,65 @@
+;; =======================================================
+;; 文件名：04-control-structures.cdlang
+;; 测试目的：验证 repeat、choose 及嵌套 (effect …) 块控制结构
+;; =======================================================
+
+;; 角色定义
+(character
+  (name player)
+  (hp 30)
+  (energy 5)
+  (status))
+
+(character
+  (name Goblin)
+  (hp 20)
+  (energy 0)
+  (status))
+
+;; 卡牌：TripleShot — 重复执行
+(card
+  (name TripleShot)
+  (cost 1)
+  (desc "Deal 2 damage 3 times.")
+  (effect
+    (repeat 3 (damage 2))
+    ;; 预期：3 次，每次 -2，Goblin HP: 20 → 14
+  ))
+
+(play-card TripleShot   player Goblin)
+
+;; 卡牌：RandomIntent — 随机选择一项
+(card
+  (name RandomIntent)
+  (cost 1)
+  (desc "Randomly deal 6 damage, or heal 6, or gain 2 energy.")
+  (effect
+    (choice
+      (effect (target enemy) (damage 6))
+      (effect (target self)  (heal 6))
+      (effect (target self)  (gain-energy 2)))
+    ;; 预期：随机三选一
+  ))
+
+(play-card RandomIntent player Goblin)
+
+;; 卡牌：NestedCombo — 嵌套 effect 块
+(card
+  (name NestedCombo)
+  (cost 2)
+  (desc "repeat a nested choice block twice.")
+  (effect
+    (target enemy)
+    (repeat 3
+      (effect
+        (choice
+          (effect (damage 1))
+          (effect (inflict weak 1))
+          (effect (inflict vulnerable 1))
+          (effect (heal 1))
+          (effect (inflict poisoned 1)))))
+    ;; 预期：三次随机 choice，每次是从五种效果中随机选择。
+  ))
+
+;; 执行测试
+(play-card NestedCombo  player Goblin)

@@ -1,0 +1,259 @@
+;; =======================================================
+;; 文件名：06-mycombo.cdlang
+;; 展示自创的各种卡牌。灵感来自杀戮尖塔、废墟图书馆、边狱巴士、炉石传说等卡牌游戏
+;; =======================================================
+
+(character
+  (name player)
+  (hp 120)
+  ;; (energy 5)
+  (energy 90) ; 展示用能量
+  (status))
+
+(character
+  (name 蠕动潜行者A)
+  (hp 999)
+  (energy 99)
+  (status))
+
+(character
+  (name 蠕动潜行者B)
+  (hp 999)
+  (energy 99)
+  (status))
+
+(character
+  (name 蠕动潜行者C)
+  (hp 999)
+  (energy 99)
+  (status))
+;; 烧伤系以点燃自身为代价，换来了高额的输出与极致爆发。
+;; 烧伤系兼顾单体与群攻手段，多张单卡能够扩散烧伤或是对群叠层，形成可观的 DoT 伤害。
+;; 炎爆术作为体系关键卡，提供了高额的对单爆发与烧伤扩散。因果循环在控制自烧伤强度、对单爆发上也有不俗的能力。
+;; 凤凰契约集控层、回复、回能量为一体，是烧伤体系的续航核心，需要谨慎控制使用。
+
+
+(card
+  (name 火焰鞭打)
+  (cost 1)
+  (desc "造成 6 点伤害，施加 3 层烧伤。若目标已有烧伤，减少 1 层以造成等同原层数的伤害。对自己施加 3 层烧伤")
+  (effect 
+          (when (has-status fire)
+            (effect (damage (get-status fire))
+              (reduce fire 1)))
+          (damage 6)
+          (inflict fire 3)
+          (target self)
+          (inflict fire 3)
+          ))
+
+
+(card
+  (name 煽风点火)
+  (cost 2)
+  (desc "施加 8 层烧伤。若目标已有烧伤，改为施加 5 层烧伤并转移等量烧伤给随机敌人。对自己施加 6 层烧伤")
+  (effect 
+          (if (has-status fire)
+            (effect (inflict fire 5)
+                    (let ([stacks (get-status fire)])
+                      (effect (target random)
+                              (inflict fire stacks))))
+            (inflict fire 8))
+          (target self)
+          (inflict fire 6)))
+
+(card
+  (name 火球术)
+  (cost 3)
+  (desc "对全体敌方造成 15 伤害，施加 3 层烧伤。若主要目标带有烧伤，额外造成 5 伤害并施加 1 层烧伤。对自己施加 10 层烧伤")
+  (effect 
+          (target all)
+          (damage 15)
+          (inflict fire 3)
+          (target enemy)  ; 主要目标
+          (when (has-status fire)
+                (effect (target all)
+                    (damage 5)
+                    (inflict fire 1)))
+          (target self)
+          (inflict fire 10)))
+
+(card
+  (name 炎爆术)
+  (cost 5)
+  (desc "对全体敌方造成 30 伤害，施加 10 层烧伤。引爆主要目标的全部烧伤并造成 3*层数 的伤害，并将引爆的层数随机施加在所有敌人上。对自己施加 14 层烧伤")
+  (effect (target all)
+          (damage 30)
+          (inflict fire 10)
+          (target enemy)
+          (let ([stacks (get-status fire)])
+            (remove-status fire)
+            (damage (* 3 stacks))
+            (repeat stacks
+                (effect (target random) (inflict fire 1))))
+          (target self)
+          (inflict fire 14)))
+
+(card
+  (name 凤凰契约)
+  (cost 3)
+  (desc "HP≤25%时，消耗所有火焰治疗自身(层数×4)并获得等量格挡。若治疗后生命值超过最大HP50%，获得3点能量。否则，使自身增加10层烧伤")
+  (effect (target self)
+          (if (hp<= 25)
+              (let ([stacks (get-status fire)])
+                  (heal (* stacks 4))
+                  (inflict block stacks)
+                  (remove-status fire)
+                  (when (hp> 50)  ; 治疗后的HP百分比
+                      (gain-energy 3)))
+              (inflict fire 10))))
+
+(card
+  (name 炎盾)
+  (cost 1)
+  (desc "消耗至多10层烧伤，获得消耗层数×2的护盾")
+  (effect 
+    (target self)
+    (let ([stacks (min (get-status fire) 10)])  ; 消耗最多10层
+      (reduce fire stacks)
+      (inflict block (* stacks 2)))))
+
+(card (name 因果逆转)
+  (cost 3)
+  (desc "交换自身与目标的烧伤层数，然后引爆双方的烧伤，造成 3*层数 的伤害")
+  (effect 
+    (let ([target-fire (get-status fire)])
+        (target self)
+        (let ([self-fire (get-status fire)])
+            (damage (* target-fire 3))
+            (remove-status fire)
+            (target enemy)
+            (damage (* self-fire 3))
+            (remove-status fire)))
+  )) 
+
+(card (name 炼狱连锁)
+  (cost 3)
+  (desc "造成 6 点伤害。若目标带有火焰，对随机敌人施加主目标烧伤层数一半的烧伤。将最后选定的目标作为主目标，重复 2 次")
+  (effect 
+    (repeat 3
+      (effect 
+        (damage 6)
+        (when (has-status fire)
+            (let ([stacks (get-status fire)])
+              (target random)
+              (inflict fire (/ stacks 2))))))))
+
+;; 盗贼套牌
+;; 盗贼套牌总体上是对单特化的套牌，单卡按照毒伤流和削弱流进行设计。毒伤流通过高额的中毒层数施加以及层数翻倍等效果造伤。
+;; 削弱流可以对敌方施加高层数的削弱、易损，并从这些效果中取得进攻优势。盗贼套牌中也提供了连接中毒与削弱的单卡，使得
+;; 盗贼在造伤与削弱间能够灵活切换。
+
+(card
+  (name 淬毒匕首)
+  (cost 1)
+  (desc "造成 4 点伤害，施加 3 层中毒。若目标已有中毒，额外施加 2 层")
+  (effect 
+    (target enemy)
+    (damage 4)
+    (inflict poisoned 3)
+    (when (has-status poisoned)
+      (inflict poisoned 2))))
+
+(card
+  (name 伤口溃烂)
+  (cost 2)
+  (desc "施加 8 层中毒。若目标已有中毒，造成中毒层数的伤害并施加 2 层易损")
+  (effect 
+    (target enemy)
+    (if (has-status poisoned)
+      (effect 
+        (let ([stacks (get-status poisoned)])
+          (damage stacks)
+          (inflict poisoned 8)
+          (inflict vulnerable 2)))
+      (inflict poisoned 8))))
+
+(card
+  (name 毒爆术)
+  (cost 3)
+  (desc "引爆目标所有中毒层数，每层造成 2 点伤害。将消耗层数的 50% 随机施加给其他敌人")
+  (effect 
+    (target enemy)
+    (let ([stacks (get-status poisoned)])
+      (remove-status poisoned)
+      (damage (* stacks 2))
+      (let ([spread (/ stacks 2)])
+        (repeat spread
+          (effect (target random) (inflict poisoned 1)))))))
+
+(card
+  (name 毒性发作)
+  (cost 1)
+  (desc "将虚弱与易损全部转化为3倍的中毒")
+  (effect
+    (target enemy)
+    (let ([w (get-status weak)]
+          [v (get-status vulnerable)])
+      (remove-status weak)
+      (remove-status vulnerable)
+      (inflict poisoned (* (+ w v) 3)))))
+
+(card
+  (name 虚弱打击)
+  (cost 1)
+  (desc "造成 5 点伤害，施加 2 层虚弱。若目标有中毒，额外施加 1 层虚弱")
+  (effect 
+    (target enemy)
+    (damage 5)
+    (inflict weak 2)
+    (when (has-status poisoned)
+      (inflict weak 1))))
+
+(card
+  (name 暴露弱点)
+  (cost 2)
+  (desc "施加 3 层易伤。若目标具有中毒和虚弱状态，中毒层数翻倍")
+  (effect 
+    (target enemy)
+    (inflict vulnerable 3)
+    (when (and (has-status poisoned) (has-status weak))
+      (let ([stacks (get-status poisoned)])
+        (inflict poisoned stacks)))))
+
+
+
+(card
+  (name 熵毒熔炉)
+  (cost 5)
+  (desc "融合目标所有状态：每层中毒+虚弱+易伤=造成(总和×3)伤害，然后施加(总和/2)层随机状态")
+  (effect 
+    (target enemy)
+    (let ([poison (get-status poisoned)]
+          [wk (get-status weak)]
+          [vuln (get-status vulnerable)])
+      (remove-status poisoned)
+      (remove-status weak)
+      (remove-status vulnerable)
+      (damage (* (+ poison (+ wk vuln)) 3))
+      (repeat (/ (+ poison (+ wk vuln)) 2)
+        (choice 
+          (inflict poisoned 1)
+          (inflict weak 1)
+          (inflict vulnerable 1))))))
+
+(play-card 火焰鞭打 player 蠕动潜行者A)
+(play-card 煽风点火 player 蠕动潜行者A)
+(play-card 火球术 player 蠕动潜行者A)
+(play-card 炎爆术 player 蠕动潜行者A)
+(play-card 凤凰契约 player 蠕动潜行者A)
+(play-card 炎盾 player 蠕动潜行者A)
+(play-card 因果逆转 player 蠕动潜行者A)
+(play-card 炼狱连锁 player 蠕动潜行者A)
+(play-card 淬毒匕首 player 蠕动潜行者A)
+(play-card 伤口溃烂 player 蠕动潜行者A)
+(play-card 毒爆术 player 蠕动潜行者A)
+(play-card 毒性发作 player 蠕动潜行者A)
+(play-card 虚弱打击 player 蠕动潜行者A)
+(play-card 虚弱打击 player 蠕动潜行者A)
+(play-card 熵毒熔炉 player 蠕动潜行者A)

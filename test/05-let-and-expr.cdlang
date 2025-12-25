@@ -1,0 +1,82 @@
+;; =======================================================
+;; 文件名：05-let-and-expr.cdlang
+;; 测试目的：验证 let 绑定、算术表达式和 get-status 用法
+;; =======================================================
+
+;; 角色定义
+(character
+  (name player)
+  (hp 40)
+  (energy 5)
+  (status (poisoned 3) (fire 2)))  ;; player 自身带 3 中毒、2 烧伤
+
+(character
+  (name Ogre)
+  (hp 60)
+  (energy 0)
+  (status (poisoned 3) (fire 2)))  ;; Ogre 同样带 3 中毒、2 烧伤
+
+;; 卡牌：LetStrike
+;; 绑定 p=get-status(poisoned), f=get-status(fire)，
+;; 然后造成 (p+f)*2 点伤害，并施加 p 层虚弱
+(card
+  (name LetStrike)
+  (cost 1)
+  (desc "Use let to compute damage from statuses")
+  (effect
+    (target enemy)
+    (let ([p (get-status poisoned)]
+          [f (get-status fire)])
+      ;; 计算总状态影响
+      (damage (* (+ p f) 2))    ;; p=3,f=2 → (5*2)=10 点伤害
+      (inflict weak p))))        ;; 施加 3 层虚弱
+  
+(play-card LetStrike player Ogre)
+;; 预期：Ogre HP 60→50；Ogre status 新增 weak 3
+
+;; 卡牌：ComputeTest
+;; 测试更复杂的算术：((fire*3 - poisoned) / 2)
+(card
+  (name ComputeTest)
+  (cost 1)
+  (desc "Complex expr: ((fire*3 - poison) / 2) damage")
+  (effect
+    (target self)
+    (let ([x (get-status fire)]
+          [y (get-status poisoned)])
+      ;; 计算值 = floor((x*3 - y) / 2)
+      (damage (/ (- (* x 3) y) 2)))))  ;; x=2,y=3 → (6-3)/2=1.5→floor=1
+
+
+(play-card ComputeTest player Ogre)
+;; 预期：player HP 40->39
+
+;; 卡牌：ScopedLet
+;; 嵌套 let 测试，外层 a=5，内层 a=2，检查遮蔽
+(card
+  (name ScopedLet)
+  (cost 1)
+  (desc "Nested let scope test")
+  (effect
+    (target self)
+    (let ([a 5])
+      (damage a)              ;; 预期对自己造成 5 点伤害
+      (let ([a 2])
+        (heal a))             ;; 内层的 a=2，预期回复 2 点
+      (heal a))))              ;; 回到外层 a=5，预期回复 5 点
+      
+
+(play-card ScopedLet player Ogre)
+;; 预期：player HP 39→34→36→40
+
+(card
+  (name MinMaxTest)
+  (cost 1)
+  (desc "Min,Max")
+  (effect 
+    (let ([x (get-status fire)]      ; x = 2
+          [y (get-status poisoned)])  ; y = 3
+          (damage (min x (max 0 y))))))  ; 预期伤害： 2
+
+(play-card MinMaxTest player Ogre)
+; 预计 Ogre HP 50->48
